@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khủng long nhảy qua xương rồng</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #game {
+            position: relative;
+            width: 600px;
+            height: 200px;
+            background-color: #fff;
+            overflow: hidden;
+            border: 2px solid #333;
+            margin-bottom: 10px;
+        }
+        #dino {
+            position: absolute;
+            bottom: 0;
+            left: 50px;
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+        }
+        #cactus {
+            position: absolute;
+            bottom: 0;
+            right: -20px;
+            width: 20px;
+            height: 40px;
+            background-color: #555;
+        }
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="dino"></div>
+        <div id="cactus"></div>
+    </div>
+    <div id="score">Số xương rồng đã nhảy qua: 0</div>
+
+    <script>
+        const dino = document.getElementById('dino');
+        const cactus = document.getElementById('cactus');
+        const scoreDisplay = document.getElementById('score');
+        let isJumping = false;
+        let gravity = 0.9;
+        let score = 0;
+
+        // Hàm xử lý nhảy
+        function jump() {
+            if (isJumping) return;
+            let position = 0;
+            isJumping = true;
+
+            let upInterval = setInterval(() => {
+                if (position >= 150) { // Độ cao nhảy tối đa
+                    clearInterval(upInterval);
+
+                    let downInterval = setInterval(() => {
+                        if (position <= 0) {
+                            clearInterval(downInterval);
+                            isJumping = false;
+                        }
+                        position -= 5;
+                        position = position * gravity;
+                        dino.style.bottom = position + 'px';
+                    }, 20);
+                } else {
+                    position += 5;
+                    dino.style.bottom = position + 'px';
+                }
+            }, 20);
+        }
+
+        // Sự kiện nhảy khi nhấn phím cách
+        document.addEventListener('keydown', (e) => {
+            if (e.keyCode === 32) {
+                jump();
+            }
+        });
+
+        // Di chuyển xương rồng và đếm số lần khủng long nhảy qua xương rồng
+        function moveCactus() {
+            let cactusPosition = 600;
+
+            let timerId = setInterval(() => {
+                if (cactusPosition < -20) {
+                    cactusPosition = 600;
+                    score++;
+                    scoreDisplay.textContent = `Số xương rồng đã nhảy qua: ${score}`;
+                } else if (cactusPosition > 0 && cactusPosition < 60 && parseInt(dino.style.bottom) < 40) {
+                    clearInterval(timerId);
+                    alert('Game Over');
+                    document.location.reload();
+                }
+
+                cactusPosition -= 10;
+                cactus.style.left = cactusPosition + 'px';
+            }, 20);
+        }
+
+        moveCactus();
+    </script>
+</body>
+</html>
