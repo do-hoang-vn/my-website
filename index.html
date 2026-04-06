@@ -1,126 +1,377 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khủng long nhảy qua xương rồng</title>
+    <title>Tranmix Promax - AI Novel Translator v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        #game {
-            position: relative;
-            width: 600px;
-            height: 200px;
-            background-color: #fff;
-            overflow: hidden;
-            border: 2px solid #333;
-            margin-bottom: 10px;
-        }
-        #dino {
-            position: absolute;
-            bottom: 0;
-            left: 50px;
-            width: 40px;
-            height: 40px;
-            background-color: #333;
-        }
-        #cactus {
-            position: absolute;
-            bottom: 0;
-            right: -20px;
-            width: 20px;
-            height: 40px;
-            background-color: #555;
-        }
-        #score {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
+        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --dark: #1e272e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; color: #2c3e50; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; background: #fff; transition: 0.3s; }
+        .card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        label { font-weight: bold; font-size: 0.85em; color: #555; display: block; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        .progress-container { margin: 25px 0; background: #e9ecef; border-radius: 50px; height: 25px; position: relative; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        #progress-bar { background: linear-gradient(90deg, #2ecc71, #27ae60); width: 0%; height: 100%; transition: 0.4s ease; }
+        #progress-text { position: absolute; width: 100%; text-align: center; line-height: 25px; font-weight: bold; font-size: 0.9em; color: #2c3e50; }
+        
+        .controls { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        button { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: var(--danger); color: white; }
+        
+        #log { margin-top: 20px; height: 200px; overflow-y: auto; background: var(--dark); color: #0be881; padding: 15px; font-family: 'Consolas', monospace; font-size: 13px; border-radius: 8px; line-height: 1.5; }
+        
+        #translated-container img { max-width: 100%; height: auto; display: block; margin: 15px auto; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div id="game">
-        <div id="dino"></div>
-        <div id="cactus"></div>
+
+<div class="container">
+    <h2 style="text-align:center; margin-bottom: 30px;">🚀 Tranmix Promax: Ultimate Translator</h2>
+    
+    <div class="config-grid">
+        <div class="card">
+            <label>Gemini Key / Batch</label>
+            <input type="password" id="key-gemini" placeholder="AIza...">
+            <input type="number" id="batch-gemini" value="60">
+        </div>
+        <div class="card">
+            <label>OpenRouter / Batch</label>
+            <input type="password" id="key-or" placeholder="sk-or-...">
+            <input type="number" id="batch-or" value="30">
+        </div>
+        <div class="card">
+            <label>DeepSeek / Batch</label>
+            <input type="password" id="key-ds" placeholder="sk-...">
+            <input type="number" id="batch-ds" value="15">
+        </div>
+        <div class="card">
+            <label>Retry / Delay (ms)</label>
+            <input type="number" id="retry-count" value="2">
+            <input type="number" id="retry-delay" value="2000">
+        </div>
     </div>
-    <div id="score">Số xương rồng đã nhảy qua: 0</div>
 
-    <script>
-        const dino = document.getElementById('dino');
-        const cactus = document.getElementById('cactus');
-        const scoreDisplay = document.getElementById('score');
-        let isJumping = false;
-        let gravity = 0.9;
-        let score = 0;
+    <label>Translation Prompt:</label>
+    <textarea id="prompt" rows="3">Dịch sang tiếng Việt mượt mà, văn phong tiểu thuyết, xưng hô linh hoạt theo ngữ cảnh.</textarea>
 
-        // Hàm xử lý nhảy
-        function jump() {
-            if (isJumping) return;
-            let position = 0;
-            isJumping = true;
+    <div style="margin-top: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+        <label>Chọn file nguồn (.txt, .docx):</label>
+        <input type="file" id="fileInput" accept=".txt,.docx" onchange="handleFileSelect()">
+    </div>
 
-            let upInterval = setInterval(() => {
-                if (position >= 150) { // Độ cao nhảy tối đa
-                    clearInterval(upInterval);
+    <div class="progress-container">
+        <div id="progress-bar"></div>
+        <div id="progress-text">Chưa có tệp tin...</div>
+    </div>
 
-                    let downInterval = setInterval(() => {
-                        if (position <= 0) {
-                            clearInterval(downInterval);
-                            isJumping = false;
-                        }
-                        position -= 5;
-                        position = position * gravity;
-                        dino.style.bottom = position + 'px';
-                    }, 20);
-                } else {
-                    position += 5;
-                    dino.style.bottom = position + 'px';
-                }
-            }, 20);
-        }
+    <div class="controls">
+        <button class="btn-start" onclick="startTranslation()">BẮT ĐẦU DỊCH</button>
+        <button class="btn-stop" onclick="stopTranslation()">DỪNG LẠI</button>
+    </div>
 
-        // Sự kiện nhảy khi nhấn phím cách
-        document.addEventListener('keydown', (e) => {
-            if (e.keyCode === 32) {
-                jump();
+    <div id="log">Hệ thống sẵn sàng...</div>
+</div>
+
+<script>
+let isRunning = false;
+let translatedContent = "";
+let fileData = []; 
+
+/** QUẢN LÝ CẤU HÌNH **/
+const STORAGE_KEY = 'tranmix_pro_config_v2';
+function saveSettings() {
+    const s = {
+        gk: document.getElementById('key-gemini').value, gb: document.getElementById('batch-gemini').value,
+        ok: document.getElementById('key-or').value, ob: document.getElementById('batch-or').value,
+        dk: document.getElementById('key-ds').value, db: document.getElementById('batch-ds').value,
+        rc: document.getElementById('retry-count').value, rd: document.getElementById('retry-delay').value,
+        p: document.getElementById('prompt').value
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+function loadSettings() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        const s = JSON.parse(saved);
+        document.getElementById('key-gemini').value = s.gk || "";
+        document.getElementById('batch-gemini').value = s.gb || "60";
+        document.getElementById('key-or').value = s.ok || "";
+        document.getElementById('batch-or').value = s.ob || "30";
+        document.getElementById('key-ds').value = s.dk || "";
+        document.getElementById('batch-ds').value = s.db || "15";
+        document.getElementById('retry-count').value = s.rc || "2";
+        document.getElementById('retry-delay').value = s.rd || "2000";
+        document.getElementById('prompt').value = s.p || "";
+    }
+}
+document.addEventListener('input', saveSettings);
+window.onload = loadSettings;
+
+function log(msg) {
+    const logDiv = document.getElementById('log');
+    logDiv.innerHTML += `> ${msg}<br>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+/** XỬ LÝ FILE ĐẦU VÀO **/
+async function handleFileSelect() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    log(`Đang đọc file ${ext}...`);
+    
+    fileData = [];
+    if (ext === 'docx') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = result.value;
+        
+        tempDiv.childNodes.forEach(n => {
+            let content = n.innerText || n.textContent || "";
+            if (content.trim().length > 0) {
+                fileData.push({ type: 'text', content: content.trim() });
+            } else if (n.innerHTML && n.innerHTML.includes('<img')) {
+                fileData.push({ type: 'html', content: n.outerHTML });
             }
         });
+    } else {
+        const text = await file.text();
+        fileData = text.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => ({ type: 'text', content: l }));
+    }
+    log(`Đã nạp ${fileData.length} đoạn. Sẵn sàng dịch!`);
+}
 
-        // Di chuyển xương rồng và đếm số lần khủng long nhảy qua xương rồng
-        function moveCactus() {
-            let cactusPosition = 600;
+/** CÁC HÀM GỌI API AI **/
+async function callGemini(key, prompt, text) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${key}`;
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            contents: [{ 
+                parts: [{ text: prompt + "\n\nContent:\n" + text }] 
+            }] 
+        })
+    });
 
-            let timerId = setInterval(() => {
-                if (cactusPosition < -20) {
-                    cactusPosition = 600;
-                    score++;
-                    scoreDisplay.textContent = `Số xương rồng đã nhảy qua: ${score}`;
-                } else if (cactusPosition > 0 && cactusPosition < 60 && parseInt(dino.style.bottom) < 40) {
-                    clearInterval(timerId);
-                    alert('Game Over');
-                    document.location.reload();
-                }
+    const data = await response.json();
 
-                cactusPosition -= 10;
-                cactus.style.left = cactusPosition + 'px';
-            }, 20);
+    // 1. Kiểm tra nếu có lỗi từ phía Google (như sai Key, quá hạn mức)
+    if (data.error) {
+        throw new Error(`Google API Error: ${data.error.message}`);
+    }
+
+    // 2. Kiểm tra cấu trúc phản hồi chuẩn
+    // Gemini đôi khi trả về 'candidates' trống nếu nội dung vi phạm chính sách
+    if (data && data.candidates && data.candidates.length > 0) {
+        const candidate = data.candidates[0];
+        
+        // Kiểm tra xem có nội dung trả về không (finishReason có thể là SAFETY, RECITATION,...)
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+            return candidate.content.parts[0].text;
+        } else {
+            throw new Error(`Gemini không trả về văn bản. Lý do: ${candidate.finishReason || "Không xác định"}`);
+        }
+    } else {
+        throw new Error("Phản hồi từ Gemini bị trống hoặc không đúng cấu trúc.");
+    }
+}
+
+async function callOpenAIStyle(url, key, model, prompt, text) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${key}`, 
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+            model: model, 
+            messages: [{role:"system", content:prompt}, {role:"user", content:text}] 
+        })
+    });
+    
+    const data = await response.json();
+
+    // KIỂM TRA DỮ LIỆU TRƯỚC KHI ĐỌC [0]
+    if (data && data.choices && data.choices.length > 0) {
+        return data.choices[0].message.content;
+    } else {
+        // Nếu không có choices, in lỗi chi tiết ra Log để ông biết tại sao
+        let errorMsg = data.error ? data.error.message : "Cấu trúc phản hồi không xác định";
+        throw new Error(errorMsg);
+    }
+}
+
+async function fetchWithRetry(apiFn, args, name) {
+    const maxRetry = parseInt(document.getElementById('retry-count').value) || 2;
+    const delay = parseInt(document.getElementById('retry-delay').value) || 2000;
+    for (let i = 1; i <= maxRetry; i++) {
+        if (!isRunning) return null;
+        try {
+            log(`Đang thử ${name} (${i}/${maxRetry})...`);
+            return await apiFn(...args);
+        } catch (e) {
+            log(`⚠️ ${name} lỗi lần ${i}: ${e.message}`);
+            if (i < maxRetry) await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    return null;
+}
+
+/** LOGIC DỊCH THUẬT **/
+async function startTranslation() {
+    if (isRunning || fileData.length === 0) return alert("Vui lòng chọn file!");
+    
+    const config = {
+        gemini: { key: document.getElementById('key-gemini').value, batch: parseInt(document.getElementById('batch-gemini').value) || 60 },
+        or: { 
+            key: document.getElementById('key-or').value, 
+            url: "https://openrouter.ai/api/v1/chat/completions", 
+            model: "stepfun/step-3.5-flash:free",
+            batch: parseInt(document.getElementById('batch-or').value) || 30
+        },
+        ds: { 
+            key: document.getElementById('key-ds').value, 
+            url: "https://api.deepseek.com/chat/completions", 
+            model: "deepseek-chat",
+            batch: parseInt(document.getElementById('batch-ds').value) || 15
+        },
+        prompt: document.getElementById('prompt').value
+    };
+
+    isRunning = true;
+    translatedContent = "";
+    let cur = 0;
+    const total = fileData.length;
+
+    while (cur < total && isRunning) {
+        let percent = ((cur / total) * 100).toFixed(1);
+        document.getElementById('progress-bar').style.width = percent + "%";
+        document.getElementById('progress-text').innerText = `${percent}% (${cur}/${total})`;
+
+        let node = fileData[cur];
+
+        if (node.type === 'html') {
+            translatedContent += node.content;
+            cur++; 
+            continue;
         }
 
-        moveCactus();
-    </script>
+        let geminiBatch = [];
+        let i = 0;
+        while (i < config.gemini.batch && (cur + i) < total && fileData[cur + i].type === 'text') {
+            geminiBatch.push(fileData[cur + i].content);
+            i++;
+        }
+        
+        let chunkText = geminiBatch.join("\n");
+        log(`Đang thử Gemini với ${i} dòng...`);
+        let res = await fetchWithRetry(callGemini, [config.gemini.key, config.prompt, chunkText], "Gemini");
+
+        if (res) {
+            appendTranslated(res);
+            cur += i; 
+        } else {
+            log("⚠️ Gemini lỗi toàn bộ batch. Đang chia nhỏ cho AI dự phòng...");
+            let fallbackCur = 0;
+            while (fallbackCur < i && isRunning) {
+                let subBatchSize = config.or.batch; 
+                let subBatchNodes = geminiBatch.slice(fallbackCur, fallbackCur + subBatchSize);
+                let subChunkText = subBatchNodes.join("\n");
+
+                log(`-> Dịch đoạn nhỏ (${subBatchNodes.length} dòng) bằng AI dự phòng...`);
+                let subRes = await fetchWithRetry(callOpenAIStyle, [config.or.url, config.or.key, config.or.model, config.prompt, subChunkText], "OpenRouter");
+                
+                if (!subRes) {
+                    log("--> OpenRouter cũng lỗi, thử DeepSeek cho nhánh này...");
+                    subRes = await fetchWithRetry(callOpenAIStyle, [config.ds.url, config.ds.key, config.ds.model, config.prompt, subChunkText], "DeepSeek");
+                }
+
+                if (subRes) {
+                    appendTranslated(subRes);
+                    fallbackCur += subBatchNodes.length;
+                } else {
+                    log(`❌ Thất bại hoàn toàn tại dòng ${cur + fallbackCur}. Bỏ qua.`);
+                    fallbackCur++;
+                }
+            }
+            cur += fallbackCur;
+        }
+    }
+
+    isRunning = false;
+    document.getElementById('progress-bar').style.width = "100%";
+    document.getElementById('progress-text').innerText = "HOÀN THÀNH!";
+    showDownloadButtons();
+}
+
+function appendTranslated(text) {
+    let paragraphs = text.split('\n').filter(p => p.trim() !== "").map(p => `<p>${p}</p>`).join("");
+    translatedContent += paragraphs;
+}
+
+function stopTranslation() { isRunning = false; log("Đã dừng!"); showDownloadButtons(); }
+
+/** XUẤT FILE (HTML, DOCX) **/
+function showDownloadButtons() {
+    const old = document.getElementById('download-group'); if (old) old.remove();
+    const group = document.createElement('div');
+    group.id = 'download-group';
+    group.className = 'controls';
+
+    // Đã bỏ tùy chọn PDF khỏi mảng này
+    const formats = [
+        { label: "HTML", color: "#2ecc71", fn: exportHTML },
+        { label: "WORD (DOCX)", color: "#2980b9", fn: exportDOCX }
+    ];
+
+    formats.forEach(fmt => {
+        const btn = document.createElement('button');
+        btn.innerText = `📥 ${fmt.label}`;
+        btn.style.background = fmt.color;
+        btn.style.color = "white";
+        btn.onclick = fmt.fn;
+        group.appendChild(btn);
+    });
+    document.querySelector('.container').appendChild(group);
+}
+
+function exportHTML() {
+    const blob = new Blob([`<html><body style="font-family:serif;padding:40px;">${translatedContent}</body></html>`], { type: 'text/html' });
+    saveFile(blob, "translated.html");
+}
+
+function exportDOCX() {
+    log("Đang đóng gói Word (chống méo ảnh)...");
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = translatedContent;
+    const imgs = tempDiv.getElementsByTagName('img');
+    for (let img of imgs) {
+        img.removeAttribute('width'); img.removeAttribute('height');
+        img.style.width = "500pt"; img.style.height = "auto";
+    }
+    const fullContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:1in;}img{max-width:100%;height:auto;}</style></head><body>${tempDiv.innerHTML}</body></html>`;
+    saveFile(htmlDocx.asBlob(fullContent), "translated.docx");
+}
+
+function saveFile(blob, name) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name; link.click();
+}
+</script>
 </body>
 </html>
