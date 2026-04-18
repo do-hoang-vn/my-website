@@ -2,100 +2,148 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Tranmix Promax - AI Novel Translator v2.2 (Multi-File)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tranmix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 
     <style>
-        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --dark: #1e272e; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; color: #2c3e50; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --dark: #1e272e; --warning: #f39c12; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 10px; color: #2c3e50; margin: 0; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; background: #fff; transition: 0.3s; }
         .card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         
-        label { font-weight: bold; font-size: 0.85em; color: #555; display: block; margin-bottom: 5px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        label { font-weight: bold; font-size: 0.85em; color: #555; display: block; margin-bottom: 5px; margin-top: 10px; }
+        label:first-child { margin-top: 0; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 0.9em; }
+        
+        .input-group { margin-top: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px dashed #ccc; }
         
         .progress-container { margin: 25px 0; background: #e9ecef; border-radius: 50px; height: 25px; position: relative; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
         #progress-bar { background: linear-gradient(90deg, #2ecc71, #27ae60); width: 0%; height: 100%; transition: 0.4s ease; }
         #progress-text { position: absolute; width: 100%; text-align: center; line-height: 25px; font-weight: bold; font-size: 0.9em; color: #2c3e50; }
         
-        .controls { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
-        button { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .controls { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; min-width: 120px; }
         button:active { transform: scale(0.95); }
         .btn-start { background: var(--primary); color: white; }
         .btn-stop { background: var(--danger); color: white; }
+        .btn-copy { background: var(--warning); color: white; }
+        .btn-download { background: var(--success); color: white; }
         
-        #log { margin-top: 20px; height: 200px; overflow-y: auto; background: var(--dark); color: #0be881; padding: 15px; font-family: 'Consolas', monospace; font-size: 13px; border-radius: 8px; line-height: 1.5; }
+        #log { margin-top: 20px; height: 150px; overflow-y: auto; background: var(--dark); color: #0be881; padding: 15px; font-family: 'Consolas', monospace; font-size: 13px; border-radius: 8px; line-height: 1.5; }
         #file-list-display { font-size: 0.85em; color: #666; margin-top: 5px; }
+        
+        #output-area { margin-top: 20px; display: none; }
+        #output-display { height: 300px; background: #fff; border: 2px solid var(--primary); padding: 10px; border-radius: 8px; overflow-y: auto; }
+
+        @media (max-width: 600px) {
+            .config-grid { grid-template-columns: 1fr; }
+            .controls button { flex: 1; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; margin-bottom: 30px;">🚀 Tranmix Promax: Ultimate Translator</h2>
+    <h2>🚀 Tranmix: AI Translator</h2>
     
     <div class="config-grid">
         <div class="card">
-            <label>Gemini Key / Batch</label>
-            <input type="password" id="key-gemini" placeholder="AIza...">
+            <label>Gemini API</label>
+            <input type="password" id="key-gemini" placeholder="API Key (AIza...)">
+            <label>Model</label>
+            <input type="text" id="model-gemini" value="gemini-1.5-flash">
+            <label>Batch Size</label>
             <input type="number" id="batch-gemini" value="60">
         </div>
         <div class="card">
-            <label>OpenRouter / Batch</label>
-            <input type="password" id="key-or" placeholder="sk-or-...">
+            <label>OpenRouter API</label>
+            <input type="password" id="key-or" placeholder="API Key (sk-or-...)">
+            <label>Model</label>
+            <input type="text" id="model-or" value="google/gemini-2.0-flash-001">
+            <label>Batch Size</label>
             <input type="number" id="batch-or" value="30">
         </div>
         <div class="card">
-            <label>DeepSeek / Batch</label>
-            <input type="password" id="key-ds" placeholder="sk-...">
+            <label>DeepSeek API</label>
+            <input type="password" id="key-ds" placeholder="API Key (sk-...)">
+            <label>Model</label>
+            <input type="text" id="model-ds" value="deepseek-chat">
+            <label>Batch Size</label>
             <input type="number" id="batch-ds" value="15">
         </div>
         <div class="card">
             <label>Retry / Delay (ms)</label>
-            <input type="number" id="retry-count" value="2">
-            <input type="number" id="retry-delay" value="2000">
+            <div style="display: flex; gap: 5px;">
+                <input type="number" id="retry-count" value="2">
+                <input type="number" id="retry-delay" value="2000">
+            </div>
+            <label>Output Format</label>
+            <select id="export-mode">
+                <option value="combined">Gộp tất cả (1 file)</option>
+                <option value="separate" disabled>Từng file (Sắp có)</option>
+            </select>
         </div>
     </div>
 
     <label>Translation Prompt:</label>
-    <textarea id="prompt" rows="3">Dịch sang tiếng Việt mượt mà, văn phong tiểu thuyết, xưng hô linh hoạt theo ngữ cảnh.</textarea>
+    <textarea id="prompt" rows="3">Dịch sang tiếng Việt mượt mà, văn phong tiểu thuyết, xưng hô linh hoạt theo ngữ cảnh. Chỉ trả về kết quả dịch.</textarea>
 
-    <div style="margin-top: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;">
-        <label>Chọn các file nguồn (.txt, .docx):</label>
+    <div class="input-group">
+        <label>Cách 1: Chọn file (.txt, .docx):</label>
         <input type="file" id="fileInput" accept=".txt,.docx" multiple onchange="handleFileSelect()">
         <div id="file-list-display"></div>
+        
+        <label style="margin-top: 15px;">Cách 2: Dán văn bản trực tiếp:</label>
+        <textarea id="source-text" rows="5" placeholder="Dán nội dung vào đây nếu không dùng file..."></textarea>
     </div>
 
     <div class="progress-container">
         <div id="progress-bar"></div>
-        <div id="progress-text">Chưa có tệp tin...</div>
+        <div id="progress-text">Chờ lệnh...</div>
     </div>
 
     <div class="controls">
         <button class="btn-start" onclick="startTranslation()">BẮT ĐẦU DỊCH</button>
         <button class="btn-stop" onclick="stopTranslation()">DỪNG LẠI</button>
+        <button class="btn-copy" onclick="copyToClipboard()">SAO CHÉP</button>
     </div>
 
-    <div id="log">Hệ thống sẵn sàng...</div>
+    <div id="output-area">
+        <label>Xem trước kết quả:</label>
+        <div id="output-display"></div>
+        <div class="controls">
+            <button class="btn-download" onclick="exportHTML()">📥 HTML</button>
+            <button class="btn-download" onclick="exportDOCX()">📥 WORD (DOCX)</button>
+        </div>
+    </div>
+
+    <div id="log">Sẵn sàng...</div>
 </div>
 
 <script>
 let isRunning = false;
-let translatedContent = "";
+let translatedHtml = ""; // HTML version for export
+let translatedText = ""; // Plain text version for preview/copy
 let fileQueue = []; 
 
-/** QUẢN LÝ CẤU HÌNH **/
-const STORAGE_KEY = 'tranmix_pro_config_v2';
+const STORAGE_KEY = 'tranmix_all_in_one_config';
+
 function saveSettings() {
     const s = {
-        gk: document.getElementById('key-gemini').value, gb: document.getElementById('batch-gemini').value,
-        ok: document.getElementById('key-or').value, ob: document.getElementById('batch-or').value,
-        dk: document.getElementById('key-ds').value, db: document.getElementById('batch-ds').value,
+        gk: document.getElementById('key-gemini').value, gm: document.getElementById('model-gemini').value, gb: document.getElementById('batch-gemini').value,
+        ok: document.getElementById('key-or').value, om: document.getElementById('model-or').value, ob: document.getElementById('batch-or').value,
+        dk: document.getElementById('key-ds').value, dm: document.getElementById('model-ds').value, db: document.getElementById('batch-ds').value,
         rc: document.getElementById('retry-count').value, rd: document.getElementById('retry-delay').value,
-        p: document.getElementById('prompt').value
+        p: document.getElementById('prompt').value,
+        st: document.getElementById('source-text').value
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
 }
@@ -105,16 +153,21 @@ function loadSettings() {
     if (saved) {
         const s = JSON.parse(saved);
         document.getElementById('key-gemini').value = s.gk || "";
+        document.getElementById('model-gemini').value = s.gm || "gemini-1.5-flash";
         document.getElementById('batch-gemini').value = s.gb || "60";
         document.getElementById('key-or').value = s.ok || "";
+        document.getElementById('model-or').value = s.om || "google/gemini-2.0-flash-001";
         document.getElementById('batch-or').value = s.ob || "30";
         document.getElementById('key-ds').value = s.dk || "";
+        document.getElementById('model-ds').value = s.dm || "deepseek-chat";
         document.getElementById('batch-ds').value = s.db || "15";
         document.getElementById('retry-count').value = s.rc || "2";
         document.getElementById('retry-delay').value = s.rd || "2000";
-        document.getElementById('prompt').value = s.p || "";
+        document.getElementById('prompt').value = s.p || "Dịch sang tiếng Việt mượt mà, văn phong tiểu thuyết, xưng hô linh hoạt theo ngữ cảnh. Chỉ trả về kết quả dịch.";
+        document.getElementById('source-text').value = s.st || "";
     }
 }
+
 document.addEventListener('input', saveSettings);
 window.onload = loadSettings;
 
@@ -124,16 +177,13 @@ function log(msg) {
     logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-/** XỬ LÝ NHIỀU FILE ĐẦU VÀO **/
 async function handleFileSelect() {
     const files = document.getElementById('fileInput').files;
     if (!files.length) return;
 
     fileQueue = [];
-    const fileListDisplay = document.getElementById('file-list-display');
-    fileListDisplay.innerHTML = `<b>Đã chọn ${files.length} file:</b> ` + Array.from(files).map(f => f.name).join(", ");
-    
-    log(`Đang chuẩn bị nạp ${files.length} file...`);
+    document.getElementById('file-list-display').innerHTML = `<b>Đã chọn ${files.length} file.</b>`;
+    log(`Đang nạp ${files.length} file...`);
 
     for (let file of files) {
         const ext = file.name.split('.').pop().toLowerCase();
@@ -144,7 +194,6 @@ async function handleFileSelect() {
             const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = result.value;
-            
             tempDiv.childNodes.forEach(n => {
                 let content = n.innerText || n.textContent || "";
                 if (content.trim().length > 0) {
@@ -157,19 +206,14 @@ async function handleFileSelect() {
             const text = await file.text();
             currentFileData = text.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => ({ type: 'text', content: l }));
         }
-
-        fileQueue.push({
-            fileName: file.name.replace(/\.[^/.]+$/, ""),
-            data: currentFileData
-        });
-        log(`Đã nạp xong: ${file.name}`);
+        fileQueue.push({ fileName: file.name.replace(/\.[^/.]+$/, ""), data: currentFileData });
     }
-    log(`Tất cả đã sẵn sàng. Nhấn "BẮT ĐẦU DỊCH" để gộp vào 1 file.`);
+    log(`Đã nạp xong ${fileQueue.length} file.`);
 }
 
-/** CÁC HÀM GỌI API AI (GIỮ NGUYÊN) **/
-async function callGemini(key, prompt, text) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${key}`;
+/** API CALLS **/
+async function callGemini(key, model, prompt, text) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,12 +221,7 @@ async function callGemini(key, prompt, text) {
     });
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
-    if (data && data.candidates && data.candidates.length > 0) {
-        const candidate = data.candidates[0];
-        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) return candidate.content.parts[0].text;
-        throw new Error(`Gemini lỗi: ${candidate.finishReason}`);
-    }
-    throw new Error("Phản hồi Gemini trống.");
+    return data.candidates[0].content.parts[0].text;
 }
 
 async function callOpenAIStyle(url, key, model, prompt, text) {
@@ -192,8 +231,8 @@ async function callOpenAIStyle(url, key, model, prompt, text) {
         body: JSON.stringify({ model: model, messages: [{role:"system", content:prompt}, {role:"user", content:text}] })
     });
     const data = await response.json();
-    if (data && data.choices && data.choices.length > 0) return data.choices[0].message.content;
-    throw new Error(data.error ? data.error.message : "Lỗi API");
+    if (data.error) throw new Error(data.error.message);
+    return data.choices[0].message.content;
 }
 
 async function fetchWithRetry(apiFn, args, name) {
@@ -202,155 +241,134 @@ async function fetchWithRetry(apiFn, args, name) {
     for (let i = 1; i <= maxRetry; i++) {
         if (!isRunning) return null;
         try {
-            log(`Đang thử ${name} (${i}/${maxRetry})...`);
             return await apiFn(...args);
         } catch (e) {
-            log(`⚠️ ${name} lỗi lần ${i}: ${e.message}`);
+            log(`⚠️ ${name} lỗi (${i}/${maxRetry}): ${e.message}`);
             if (i < maxRetry) await new Promise(r => setTimeout(r, delay));
         }
     }
     return null;
 }
 
-/** LOGIC DỊCH THUẬT GỘP FILE **/
 async function startTranslation() {
-    if (isRunning || fileQueue.length === 0) return alert("Vui lòng chọn file!");
+    if (isRunning) return;
     
+    // Prepare input
+    let finalQueue = [];
+    const sourceText = document.getElementById('source-text').value.trim();
+    
+    if (fileQueue.length > 0) {
+        finalQueue = fileQueue;
+    } else if (sourceText) {
+        finalQueue = [{
+            fileName: "Manual_Input",
+            data: sourceText.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => ({ type: 'text', content: l }))
+        }];
+    } else {
+        return alert("Vui lòng chọn file hoặc dán văn bản!");
+    }
+
     isRunning = true;
-    translatedContent = ""; // Gộp tất cả vào biến này
+    translatedHtml = "";
+    translatedText = "";
+    document.getElementById('output-area').style.display = 'block';
+    document.getElementById('output-display').innerHTML = "";
 
     const config = {
-        gemini: { key: document.getElementById('key-gemini').value, batch: parseInt(document.getElementById('batch-gemini').value) || 60 },
-        or: { 
-            key: document.getElementById('key-or').value, 
-            url: "https://openrouter.ai/api/v1/chat/completions", 
-            model: "openrouter/elephant-alpha",
-            batch: parseInt(document.getElementById('batch-or').value) || 30
-        },
-        ds: { 
-            key: document.getElementById('key-ds').value, 
-            url: "https://api.deepseek.com/chat/completions", 
-            model: "deepseek-chat",
-            batch: parseInt(document.getElementById('batch-ds').value) || 15
-        },
+        gemini: { key: document.getElementById('key-gemini').value, model: document.getElementById('model-gemini').value, batch: parseInt(document.getElementById('batch-gemini').value) || 60 },
+        or: { key: document.getElementById('key-or').value, model: document.getElementById('model-or').value, url: "https://openrouter.ai/api/v1/chat/completions", batch: parseInt(document.getElementById('batch-or').value) || 30 },
+        ds: { key: document.getElementById('key-ds').value, model: document.getElementById('model-ds').value, url: "https://api.deepseek.com/chat/completions", batch: parseInt(document.getElementById('batch-ds').value) || 15 },
         prompt: document.getElementById('prompt').value
     };
 
-    for (let fileObj of fileQueue) {
+    for (let fileObj of finalQueue) {
         if (!isRunning) break;
-
-        log(`--- Đang dịch: ${fileObj.fileName} ---`);
-        translatedContent += `<h1 style="text-align:center; page-break-before: always;">${fileObj.fileName}</h1>`;
+        log(`--- Dịch: ${fileObj.fileName} ---`);
+        translatedHtml += `<h1>${fileObj.fileName}</h1>`;
+        translatedText += `--- ${fileObj.fileName} ---\n`;
         
-        let fileData = fileObj.data;
+        let data = fileObj.data;
         let cur = 0;
-        const total = fileData.length;
+        let total = data.length;
 
         while (cur < total && isRunning) {
             let percent = ((cur / total) * 100).toFixed(1);
             document.getElementById('progress-bar').style.width = percent + "%";
-            document.getElementById('progress-text').innerText = `${fileObj.fileName}: ${percent}% (${cur}/${total})`;
+            document.getElementById('progress-text').innerText = `${fileObj.fileName}: ${percent}%`;
 
-            let node = fileData[cur];
-            if (node.type === 'html') {
-                translatedContent += node.content;
-                cur++; 
-                continue;
+            if (data[cur].type === 'html') {
+                translatedHtml += data[cur].content;
+                cur++; continue;
             }
 
-            let geminiBatch = [];
+            let batch = [];
             let i = 0;
-            while (i < config.gemini.batch && (cur + i) < total && fileData[cur + i].type === 'text') {
-                geminiBatch.push(fileData[cur + i].content);
+            while (i < config.gemini.batch && (cur + i) < total && data[cur + i].type === 'text') {
+                batch.push(data[cur + i].content);
                 i++;
             }
+
+            let res = await fetchWithRetry(callGemini, [config.gemini.key, config.gemini.model, config.prompt, batch.join("\n")], "Gemini");
             
-            let chunkText = geminiBatch.join("\n");
-            log(`Đang thử Gemini với ${i} dòng...`);
-            let res = await fetchWithRetry(callGemini, [config.gemini.key, config.prompt, chunkText], "Gemini");
-
-            if (res) {
-                appendTranslated(res);
-                cur += i; 
-            } else {
-                log("⚠️ Gemini lỗi batch. Chuyển AI dự phòng...");
-                let fallbackCur = 0;
-                while (fallbackCur < i && isRunning) {
-                    let subBatchSize = config.or.batch; 
-                    let subBatchNodes = geminiBatch.slice(fallbackCur, fallbackCur + subBatchSize);
-                    let subChunkText = subBatchNodes.join("\n");
-                    log(`-> Dịch đoạn nhỏ (${subBatchNodes.length} dòng) bằng AI dự phòng...`);
-                    let subRes = await fetchWithRetry(callOpenAIStyle, [config.or.url, config.or.key, config.or.model, config.prompt, subChunkText], "OpenRouter");
-                    
+            if (!res) {
+                log("Chuyển AI dự phòng...");
+                // OpenRouter fallback (smaller batch)
+                let subCur = 0;
+                let fallbackResFull = "";
+                while (subCur < batch.length && isRunning) {
+                    let subBatch = batch.slice(subCur, subCur + config.or.batch);
+                    let subRes = await fetchWithRetry(callOpenAIStyle, [config.or.url, config.or.key, config.or.model, config.prompt, subBatch.join("\n")], "OpenRouter");
                     if (!subRes) {
-                        subRes = await fetchWithRetry(callOpenAIStyle, [config.ds.url, config.ds.key, config.ds.model, config.prompt, subChunkText], "DeepSeek");
+                        subRes = await fetchWithRetry(callOpenAIStyle, [config.ds.url, config.ds.key, config.ds.model, config.prompt, subBatch.join("\n")], "DeepSeek");
                     }
-
+                    
                     if (subRes) {
-                        appendTranslated(subRes);
-                        fallbackCur += subBatchNodes.length;
+                        fallbackResFull += subRes + "\n";
+                        subCur += subBatch.length;
                     } else {
-                        isRunning = false; 
-                        log(`❌ Thất bại hoàn toàn tại dòng ${cur + fallbackCur}. Dừng chương trình.`);
-                        alert(`Lỗi: Không thể dịch đoạn văn tại dòng ${cur + fallbackCur}. Chương trình đã dừng để bảo vệ dữ liệu.`);
+                        isRunning = false;
+                        alert("Lỗi: Tất cả AI đều thất bại.");
                         break;
                     }
                 }
-                cur += fallbackCur;
+                res = fallbackResFull;
+            }
+
+            if (res) {
+                appendResult(res);
+                cur += i;
             }
         }
     }
 
     isRunning = false;
     document.getElementById('progress-bar').style.width = "100%";
-    document.getElementById('progress-text').innerText = "HOÀN THÀNH TẤT CẢ!";
-    showDownloadButtons();
+    document.getElementById('progress-text').innerText = "HOÀN THÀNH!";
+    log("✅ Xong!");
 }
 
-function appendTranslated(text) {
-    let paragraphs = text.split('\n').filter(p => p.trim() !== "").map(p => `<p>${p}</p>`).join("");
-    translatedContent += paragraphs;
+function appendResult(text) {
+    translatedText += text + "\n";
+    let paras = text.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join("");
+    translatedHtml += paras;
+    document.getElementById('output-display').innerHTML = translatedHtml;
+    document.getElementById('output-display').scrollTop = document.getElementById('output-display').scrollHeight;
 }
 
-function stopTranslation() { isRunning = false; log("Đã dừng!"); showDownloadButtons(); }
+function stopTranslation() { isRunning = false; log("Đã dừng!"); }
 
-/** XUẤT 1 FILE DUY NHẤT **/
-function showDownloadButtons() {
-    const old = document.getElementById('download-group'); if (old) old.remove();
-    const group = document.createElement('div');
-    group.id = 'download-group';
-    group.className = 'controls';
-
-    const formats = [
-        { label: "HTML", color: "#2ecc71", fn: exportHTML },
-        { label: "WORD (DOCX)", color: "#2980b9", fn: exportDOCX }
-    ];
-
-    formats.forEach(fmt => {
-        const btn = document.createElement('button');
-        btn.innerText = `📥 ${fmt.label}`;
-        btn.style.background = fmt.color;
-        btn.style.color = "white";
-        btn.onclick = fmt.fn;
-        group.appendChild(btn);
-    });
-    document.querySelector('.container').appendChild(group);
+function copyToClipboard() {
+    navigator.clipboard.writeText(translatedText).then(() => alert("Đã sao chép text!"));
 }
 
 function exportHTML() {
-    const blob = new Blob([`<html><body style="font-family:serif;padding:40px;">${translatedContent}</body></html>`], { type: 'text/html' });
-    saveFile(blob, "combined_translated.html");
+    const blob = new Blob([`<html><body style="font-family:serif;padding:40px;">${translatedHtml}</body></html>`], { type: 'text/html' });
+    saveFile(blob, "tranmix_export.html");
 }
 
 function exportDOCX() {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = translatedContent;
-    const imgs = tempDiv.getElementsByTagName('img');
-    for (let img of imgs) {
-        img.style.width = "500pt"; img.style.height = "auto";
-    }
-    const fullContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:1in;}img{max-width:100%;height:auto;}</style></head><body>${tempDiv.innerHTML}</body></html>`;
-    saveFile(htmlDocx.asBlob(fullContent), "combined_translated.docx");
+    const fullContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:1in;}p{margin-bottom:10pt;}</style></head><body>${translatedHtml}</body></html>`;
+    saveFile(htmlDocx.asBlob(fullContent), "tranmix_export.docx");
 }
 
 function saveFile(blob, name) {
